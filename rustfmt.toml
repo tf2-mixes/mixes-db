@@ -1,0 +1,11 @@
+brace_style = "AlwaysNextLine"
+condense_wildcard_suffixes = true
+control_brace_style = "ClosingNextLine"
+fn_single_line = true
+format_strings = true
+imports_granularity = "Module"
+match_block_trailing_comma = true
+newline_style = "Unix"
+group_imports = "StdExternalCrate"
+struct_field_align_threshold = 15
+wrap_comments = true
