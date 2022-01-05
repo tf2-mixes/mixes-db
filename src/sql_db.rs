@@ -85,10 +85,15 @@ mod tests
 {
     use postgres::{Client, NoTls};
 
+    use super::{Database, SQLDb};
+
     #[test]
     fn connect_to_db()
     {
         Client::connect("host=localhost user=mixes dbname=mixes-stats", NoTls)
             .expect("Unable to connect to the database. Make sure postgresql is set up correctly");
     }
+
+    #[test]
+    fn start() { let db = SQLDb::start().expect("Unable to connect to SQL database"); }
 }
