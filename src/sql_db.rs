@@ -41,7 +41,7 @@ impl SQLDb
                 damage_taken int,
                 kills int,
                 deaths int,
-                time_played_secs
+                time_played_secs int
             );",
         )
     }
