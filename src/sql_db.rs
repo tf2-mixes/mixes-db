@@ -20,17 +20,17 @@ impl SQLDb
     fn init_tables(&mut self) -> Result<(), sql::Error>
     {
         self.client.batch_execute(
-            "CREATE TABLE users (
+            "CREATE TABLE IF NOT EXISTS users (
                 steam_id varchar(20),
                 discord_id varchar(80)
             );
-            CREATE TABLE logs (
+            CREATE TABLE IF NOT EXISTS logs (
                 log_id int,
                 date int,
                 map varchar(50),
                 length_secs int
             );
-            CREATE TABLE stats (
+            CREATE TABLE IF NOT EXISTS stats (
                 log_id int,
                 steam_id varchar(20),
                 class int,
