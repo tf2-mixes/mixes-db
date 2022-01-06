@@ -99,6 +99,8 @@ impl SteamID
         Self::try_for_account_type(self.id64).expect("Corrupted steam id. Check unsafe `new` calls")
     }
 
+    pub fn id64(self) -> u64 { self.id64 }
+
     pub fn to_id64_string(self) -> String { self.id64.to_string() }
 
     pub fn to_id3_string(self) -> String

@@ -21,14 +21,16 @@ impl SQLDb
     {
         self.client.batch_execute(
             "CREATE TABLE IF NOT EXISTS users (
-                steam_id varchar(20),
-                discord_id varchar(80)
+                steam_id bigint,
+                discord_id bigint NOT NULL UNIQUE,
+                PRIMARY KEY (steam_id)
             );
             CREATE TABLE IF NOT EXISTS logs (
                 log_id int,
                 date int,
                 map varchar(50),
-                length_secs int
+                length_secs int,
+                PRIMARY KEY (log_id)
             );
             CREATE TABLE IF NOT EXISTS stats (
                 log_id int,
@@ -62,9 +64,32 @@ impl Database for SQLDb
         Ok(db)
     }
 
-    fn add_user(&mut self, steam_id: SteamID, discord_id: String) -> Result<bool, Self::Error>
+    fn add_user(&mut self, steam_id: SteamID, discord_id: u64) -> Result<bool, Self::Error>
     {
-        todo!()
+        // Convert to bigint
+        let steam_id: i64 = steam_id.id64() as i64;
+        let discord_id: i64 = discord_id as i64;
+        // Check if the steam id or discord id is already in the database
+        if self
+            .client
+            .query(
+                "SELECT FROM users WHERE steam_id = $1 OR discord_id = $2",
+                &[&steam_id, &discord_id],
+            )?
+            .is_empty()
+        {
+            // No entries yet. Add user to the database.
+            self.client.execute(
+                "INSERT INTO users (steam_id, discord_id) VALUES ($1, $2)",
+                &[&steam_id, &discord_id],
+            )?;
+
+            Ok(true)
+        }
+        else {
+            // Already in the database
+            Ok(false)
+        }
     }
 
     fn update(&mut self, min_ratio: f32) -> Result<(), Self::Error> { todo!() }

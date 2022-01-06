@@ -14,7 +14,7 @@ pub trait Database: Sized
     /// `true` if the player was successfully added, `false` if there is already
     /// a player with the same `steam_id` or `discord_id`. Returns an Error if
     /// anything during registering goes wrong.
-    fn add_user(&mut self, steam_id: SteamID, discord_id: String) -> Result<bool, Self::Error>;
+    fn add_user(&mut self, steam_id: SteamID, discord_id: u64) -> Result<bool, Self::Error>;
 
     /// Retrieve the latest logs of the mixes players from logs.tf. Ignores
     /// games that do not contain enough mixes players. The amount of mixes
