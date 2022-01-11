@@ -13,7 +13,7 @@ const ACCOUNT_INSTANCE_MASK: u64 = 0xfffff << ACCOUNT_INSTANCE_OFFSET_BITS;
 const ACCOUNT_TYPE_OFFSET_BITS: u64 = 52;
 const UNIVERSE_OFFSET_BITS: u64 = 56;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct SteamID
 {
     id64: u64,
