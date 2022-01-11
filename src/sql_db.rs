@@ -43,7 +43,7 @@ impl SQLDb
             CREATE TABLE IF NOT EXISTS dm_stats (
                 log_id OID,
                 steam_id bigint,
-                class int,
+                class smallint,
                 won_rounds smallint,
                 num_rounds smallint,
                 damage int,
@@ -82,6 +82,7 @@ impl SQLDb
 
     pub fn add_log(&mut self, log: Log) -> Result<(), sql::Error>
     {
+        println!("Registering log {}", log.meta().id);
         // Add log metadata to the logs table
         self.client.execute(
             "INSERT INTO logs (log_id, date, map, duration_secs, num_players) VALUES ($1, $2, $3, \
@@ -94,6 +95,8 @@ impl SQLDb
                 &(log.meta().num_players as i16),
             ],
         )?;
+
+        println!("Adding performances..");
 
         // Add all performances of all players in the log
         for (steam_id, performances) in log.performances() {
@@ -137,6 +140,8 @@ impl SQLDb
                 }
             }
         }
+
+        println!("Done.");
 
         Ok(())
     }
