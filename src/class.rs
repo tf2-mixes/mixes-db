@@ -64,7 +64,7 @@ impl FromStr for Class
         match s {
             "demoman" => Ok(Self::Demoman),
             "engineer" => Ok(Self::Engineer),
-            "heavy" => Ok(Self::Heavy),
+            "heavy" | "heavyweapons" => Ok(Self::Heavy),
             "medic" => Ok(Self::Medic),
             "pyro" => Ok(Self::Pyro),
             "scout" => Ok(Self::Scout),
