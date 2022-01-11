@@ -21,8 +21,8 @@ impl Score
 
     pub fn from_json(json: &JsonValue) -> Self
     {
-        let red = json["Red"]["score"].as_u8().unwrap();
-        let blue = json["Blue"]["score"].as_u8().unwrap();
+        let red = json["teams"]["Red"]["score"].as_u8().unwrap();
+        let blue = json["teams"]["Blue"]["score"].as_u8().unwrap();
 
         Self { red, blue }
     }
