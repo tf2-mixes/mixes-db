@@ -152,8 +152,11 @@ impl FromStr for SteamID
                         return Err(());
                     }
 
-                    let id31upper_bits = parts[2][..s.len() - 1].parse::<u32>().map_err(|_| ())?;
-                    id31upper_bits << 1 | lowest_bit
+                    let id31upper_bits = parts[2][..parts[2].len() - 1]
+                        .parse::<u32>()
+                        .map_err(|_| ())?;
+                    id31upper_bits | lowest_bit // Whaddahell, why is this so
+                                                // trippy??
                 };
                 let account_type: AccountType = parts[0].chars().nth(1).unwrap().try_into()?;
                 let universe: Universe = Universe::Public;
@@ -240,5 +243,24 @@ impl TryFrom<char> for AccountType
             'a' => Ok(Self::AnonUser),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod test
+{
+    use std::str::FromStr;
+
+    use crate::SteamID;
+
+    #[test]
+    fn from_id3()
+    {
+        assert_eq!(
+            SteamID::from_str("[U:1:71020853]")
+                .expect("Unable to parse")
+                .id64(),
+            76561198031286581
+        );
     }
 }
