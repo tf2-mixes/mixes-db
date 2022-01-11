@@ -14,6 +14,7 @@ pub enum Class
     Sniper,
     Soldier,
     Spy,
+    Unknown,
 }
 
 impl Class
@@ -71,6 +72,7 @@ impl FromStr for Class
             "sniper" => Ok(Self::Sniper),
             "soldier" => Ok(Self::Soldier),
             "spy" => Ok(Self::Spy),
+            "unknown" => Ok(Self::Unknown),
             unknown => Err(UnknownClassError {
                 class: unknown.to_string(),
             }),
