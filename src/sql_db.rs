@@ -90,7 +90,7 @@ impl SQLDb
                 &log.meta().id,
                 &log.meta().date_time,
                 &log.meta().map,
-                &log.duration_secs(),
+                &(log.duration_secs() as i32),
                 &(log.meta().num_players as i16),
             ],
         )?;
@@ -114,7 +114,7 @@ impl SQLDb
                                 &(performance.generic.damage_taken as i32),
                                 &(dm_perf.kills as i16),
                                 &(dm_perf.deaths as i16),
-                                &(dm_perf.time_played_secs),
+                                &(dm_perf.time_played_secs as i32),
                             ],
                         )?;
                     },
@@ -128,9 +128,9 @@ impl SQLDb
                                 &(steam_id.id64() as i64),
                                 &(performance.generic.won_rounds as i16),
                                 &(performance.generic.num_rounds as i16),
-                                &(performance.generic.damage_taken),
+                                &(performance.generic.damage_taken as i32),
                                 &(med_perf.deaths as i16),
-                                &(med_perf.time_played_secs),
+                                &(med_perf.time_played_secs as i32),
                             ],
                         )?;
                     },
