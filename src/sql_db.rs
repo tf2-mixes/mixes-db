@@ -244,10 +244,10 @@ impl Database for SQLDb
             if meta.num_players != 0 {
                 let ratio = *occ as f32 / meta.num_players as f32;
 
-                ratio >= min_ratio
+                ratio < min_ratio
             }
             else {
-                false
+                true
             }
         });
 
