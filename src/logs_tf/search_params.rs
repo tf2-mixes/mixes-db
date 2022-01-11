@@ -73,7 +73,7 @@ impl SearchParams
         };
 
         let request_builder = match self.limit {
-            Some(limit) => request_builder.query(&["limit", &limit.to_string()]),
+            Some(limit) => request_builder.query(&[("limit", &limit.to_string())]),
             None => request_builder,
         };
 
