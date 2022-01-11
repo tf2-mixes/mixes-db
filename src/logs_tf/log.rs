@@ -30,7 +30,7 @@ impl LogMetadata
         Self {
             id:          json["id"].as_u32().unwrap(),
             date_time:   DateTime::from_utc(
-                NaiveDateTime::from_timestamp(json["data"].as_i64().unwrap(), 0),
+                NaiveDateTime::from_timestamp(json["date"].as_i64().unwrap(), 0),
                 Utc,
             ),
             map:         json["map"].as_str().unwrap().to_owned(),
