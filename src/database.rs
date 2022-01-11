@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use crate::{Class, Performance, SteamID};
 
 pub trait Database: Sized
@@ -16,15 +18,34 @@ pub trait Database: Sized
     /// anything during registering goes wrong.
     fn add_user(&mut self, steam_id: SteamID, discord_id: u64) -> Result<bool, Self::Error>;
 
+    /// Remove a mixes user from the database.
+    /// This does not remove all the data already saved in the database, it just
+    /// means that there will be no further attempt to collect data concerning
+    /// this user.
+    fn remove_user(&mut self, steam_id: SteamID) -> Result<bool, Self::Error>;
+
+    /// Get a list of users registered as mixes players in the database.
+    ///
+    /// # Returns
+    /// A vector containing all `SteamID`s registered as mixes players.
+    fn users(&mut self) -> Result<Vec<SteamID>, Self::Error>;
+
     /// Retrieve the latest logs of the mixes players from logs.tf. Ignores
     /// games that do not contain enough mixes players. The amount of mixes
     /// players needed in one game is governed by the `min_ratio` variable,
     /// which must be between `0` (include all logs) and `1` (include only logs
     /// where all players are registered as mixes players).
+    /// `num_players` determines the number of players that must be present for
+    /// this log to count. In the future, this will be replaced by a type of
+    /// gamemode.
     ///
     /// # Panics
     /// If `0 <= min_ratio <= 1` is *not* true.
-    fn update(&mut self, min_ratio: f32) -> Result<(), Self::Error>;
+    fn update(
+        &mut self,
+        min_ratio: f32,
+        num_players: RangeInclusive<u8>,
+    ) -> Result<(), Self::Error>;
 
     /// Get the most recent performance records (stats) of the player described
     /// by the `user`. Only logs where the player has played `class` for any
