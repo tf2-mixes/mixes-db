@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
+use std::thread;
+use std::time::Duration;
 
 use postgres as sql;
 
@@ -260,8 +262,14 @@ impl Database for SQLDb
 
         // Download the new logs and add it to the database
         for (meta, _) in new_logs.values() {
-            let log = Log::download(meta.id).expect("Failed to download a log");
-            self.add_log(log)?;
+            let mut log = Log::download(meta.id);
+            while log.is_err() {
+                println!("Failed to download log. Trying again");
+                thread::sleep(Duration::from_millis(500));
+                log = Log::download(meta.id);
+            }
+
+            self.add_log(log.unwrap())?;
         }
 
         Ok(())
