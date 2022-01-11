@@ -203,6 +203,7 @@ impl Database for SQLDb
     fn update(&mut self, min_ratio: f32, num_players: RangeInclusive<u8>)
         -> Result<(), Self::Error>
     {
+        println!("Updating database");
         let user_ids = self.users()?;
         let known_logs = self.known_logs()?;
 
@@ -212,9 +213,8 @@ impl Database for SQLDb
         // participated.
         let mut new_logs: HashMap<u32, (LogMetadata, u8)> = HashMap::new();
         for user_id in user_ids {
-            let mut recent_logs =
-                logs_tf::search_logs(SearchParams::player_id(user_id).add_limit(10000))
-                    .expect("Unable to read players logs");
+            let mut recent_logs = logs_tf::search_logs(SearchParams::player_id(user_id))
+                .expect("Unable to read players logs");
 
             // Remove all logs that are already in the database
             remove_external_occurrences(&mut recent_logs, &known_logs);
@@ -233,6 +233,11 @@ impl Database for SQLDb
             }
         }
 
+        println!(
+            "Players have {} logs not in the database combined.",
+            new_logs.len()
+        );
+
         // Keep only the logs where enough mixes players were there, in accordance with
         // the ratio.
         new_logs.drain_filter(|_, (meta, occ)| {
@@ -245,6 +250,8 @@ impl Database for SQLDb
                 false
             }
         });
+
+        println!("{} logs need to be downloaded", new_logs.len());
 
         // Download the new logs and add it to the database
         for (meta, _) in new_logs.values() {
@@ -289,8 +296,8 @@ fn remove_external_occurrences(target: &mut Vec<LogMetadata>, check: &[u32])
                 target.remove(target_i - 1);
                 target_i -= 1;
             },
-            Ordering::Less => check_i -= 1,
-            Ordering::Greater => target_i -= 1,
+            Ordering::Less => target_i -= 1,
+            Ordering::Greater => check_i -= 1,
         }
     }
 }
@@ -298,9 +305,11 @@ fn remove_external_occurrences(target: &mut Vec<LogMetadata>, check: &[u32])
 #[cfg(test)]
 mod tests
 {
+    use chrono::{DateTime, NaiveDateTime, Utc};
     use postgres::{Client, NoTls};
 
-    use super::{Database, SQLDb};
+    use super::{remove_external_occurrences, Database, SQLDb};
+    use crate::logs_tf::LogMetadata;
 
     #[test]
     fn connect_to_db()
@@ -311,4 +320,27 @@ mod tests
 
     #[test]
     fn start() { let db = SQLDb::start().expect("Unable to connect to SQL database"); }
+
+    #[test]
+    fn remove_external_occ()
+    {
+        let create_meta = |id| LogMetadata {
+            id,
+            date_time: DateTime::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+            map: "cp_sunshine".to_owned(),
+            num_players: 12,
+        };
+
+        let mut log_metas = vec![
+            create_meta(2145),
+            create_meta(1247),
+            create_meta(5),
+            create_meta(0),
+        ];
+        let check = [1247, 0];
+
+        remove_external_occurrences(&mut log_metas, &check);
+
+        assert_eq!(log_metas.len(), 2);
+    }
 }
