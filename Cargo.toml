@@ -9,5 +9,6 @@ edition = "2021"
 enum-primitive-derive = "^0.2.2"
 json = "*"
 num-traits = "*"
-postgres = "*"
+postgres = {version = "*", features = ["with-chrono-0_4"]}
 reqwest = {version = "*", features = ["blocking"]}
+chrono = "*"
