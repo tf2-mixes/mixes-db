@@ -29,12 +29,14 @@ impl MedicPerformance
         let class_stats = class_stats.unwrap();
 
         Some(Self {
-            healing: json["heal"].as_u32().unwrap(),
-            average_uber_length_secs: json["medicstats"]["avg_uber_length"].as_f32().unwrap(),
-            num_ubers: json["ubers"].as_u8().unwrap(),
-            num_drops: json["drops"].as_u8().unwrap(),
-            deaths: class_stats["deaths"].as_u8().unwrap(),
-            time_played_secs: class_stats["total_time"].as_u32().unwrap(),
+            healing: json["heal"].as_u32().unwrap_or(0),
+            average_uber_length_secs: json["medicstats"]["avg_uber_length"]
+                .as_f32()
+                .unwrap_or(0.0),
+            num_ubers: json["ubers"].as_u8().unwrap_or(0),
+            num_drops: json["drops"].as_u8().unwrap_or(0),
+            deaths: class_stats["deaths"].as_u8().unwrap_or(0),
+            time_played_secs: class_stats["total_time"].as_u32().unwrap_or(0),
         })
     }
 }
