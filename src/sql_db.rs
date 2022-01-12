@@ -64,7 +64,6 @@ impl SQLDb
                 log_id OID,
                 steam_id bigint,
                 healing int,
-                damage_taken int,
                 deaths smallint,
                 time_played_secs int
             );
@@ -143,8 +142,8 @@ impl SQLDb
                     },
                     Performance::Med(med_perf) => {
                         self.client.execute(
-                            "INSERT INTO med_stats (log_id, steam_id, healing, damage_taken, \
-                             deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6)",
+                            "INSERT INTO med_stats (log_id, steam_id, healing, deaths, \
+                             time_played_secs) VALUES ($1, $2, $3, $4, $5)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
