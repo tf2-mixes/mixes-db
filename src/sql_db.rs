@@ -10,9 +10,8 @@ use crate::class::Class;
 use crate::database::Database;
 use crate::logs_tf::search_params::SearchParams;
 use crate::logs_tf::{self, Log, LogMetadata};
-use crate::performance::Performance;
 use crate::steam_id::SteamID;
-use crate::SpecificPerformance;
+use crate::Performance;
 
 /// Abstraction over a Postgresql database containing the saved mixes stats.
 /// Requires a postgresql server to be running on the system. Make sure a role
@@ -42,14 +41,21 @@ impl SQLDb
                 num_players smallint,
                 PRIMARY KEY (log_id)
             );
-            CREATE TABLE IF NOT EXISTS dm_stats (
+            CREATE TABLE IF NOT EXISTS overall_stats (
                 log_id OID,
                 steam_id bigint,
-                class smallint,
                 won_rounds smallint,
                 num_rounds smallint,
                 damage int,
                 damage_taken int,
+                kills smallint,
+                deaths smallint
+            );
+            CREATE TABLE IF NOT EXISTS dm_stats (
+                log_id OID,
+                steam_id bigint,
+                class smallint,
+                damage int,
                 kills smallint,
                 deaths smallint,
                 time_played_secs int
@@ -57,8 +63,7 @@ impl SQLDb
             CREATE TABLE IF NOT EXISTS med_stats (
                 log_id OID,
                 steam_id bigint,
-                won_rounds smallint,
-                num_rounds smallint,
+                healing int,
                 damage_taken int,
                 deaths smallint,
                 time_played_secs int
@@ -103,37 +108,47 @@ impl SQLDb
         // Add all performances of all players in the log
         for (steam_id, performances) in log.performances() {
             for performance in performances {
-                match &performance.specific {
-                    SpecificPerformance::DM(dm_perf) => {
+                match &performance {
+                    Performance::Overall(perf) => {
                         self.client.execute(
-                            "INSERT INTO dm_stats (log_id, steam_id, class, won_rounds, \
-                             num_rounds, damage, damage_taken, kills, deaths, time_played_secs) \
-                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+                            "INSERT INTO overall_stats (log_id, steam_id, won_rounds, num_rounds, \
+                             damage, damage_taken, kills, deaths) VALUES ($1, $2, $3, $4, $5, $6, \
+                             $7, $8)",
+                            &[
+                                &log.meta().id,
+                                &(steam_id.id64() as i64),
+                                &(perf.won_rounds as i16),
+                                &(perf.num_rounds as i16),
+                                &(perf.damage as i32),
+                                &(perf.damage_taken as i32),
+                                &(perf.kills as i16),
+                                &(perf.deaths as i16),
+                            ],
+                        )?;
+                    },
+                    Performance::DM(dm_perf) => {
+                        self.client.execute(
+                            "INSERT INTO dm_stats (log_id, steam_id, class, damage, kills, \
+                             deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6, $7)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
                                 &(dm_perf.class as i16),
-                                &(performance.generic.won_rounds as i16),
-                                &(performance.generic.num_rounds as i16),
                                 &(dm_perf.damage as i32),
-                                &(performance.generic.damage_taken as i32),
                                 &(dm_perf.kills as i16),
                                 &(dm_perf.deaths as i16),
                                 &(dm_perf.time_played_secs as i32),
                             ],
                         )?;
                     },
-                    SpecificPerformance::Med(med_perf) => {
+                    Performance::Med(med_perf) => {
                         self.client.execute(
-                            "INSERT INTO med_stats (log_id, steam_id, won_rounds, num_rounds, \
-                             damage_taken, deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, \
-                             $6, $7)",
+                            "INSERT INTO med_stats (log_id, steam_id, healingdamage_taken, \
+                             deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
-                                &(performance.generic.won_rounds as i16),
-                                &(performance.generic.num_rounds as i16),
-                                &(performance.generic.damage_taken as i32),
+                                &(med_perf.healing as i32),
                                 &(med_perf.deaths as i16),
                                 &(med_perf.time_played_secs as i32),
                             ],
@@ -192,7 +207,24 @@ impl Database for SQLDb
         }
     }
 
-    fn remove_user(&mut self, steam_id: SteamID) -> Result<bool, Self::Error> { todo!() }
+    fn remove_user(&mut self, steam_id: SteamID) -> Result<bool, Self::Error>
+    {
+        let steam_id = steam_id.id64() as i64;
+        let user_exists = !self
+            .client
+            .query("SELECT FROM users WHERE steam_id = $1", &[&steam_id])?
+            .is_empty();
+
+        if user_exists {
+            self.client
+                .execute("DELETE FROM users WHERE steam_id = $1", &[&steam_id])?;
+
+            Ok(true)
+        }
+        else {
+            Ok(false)
+        }
+    }
 
     fn users(&mut self) -> Result<Vec<SteamID>, Self::Error>
     {
@@ -270,6 +302,7 @@ impl Database for SQLDb
             }
 
             self.add_log(log.unwrap())?;
+            thread::sleep(Duration::from_millis(500));
         }
 
         Ok(())

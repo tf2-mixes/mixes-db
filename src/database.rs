@@ -22,6 +22,9 @@ pub trait Database: Sized
     /// This does not remove all the data already saved in the database, it just
     /// means that there will be no further attempt to collect data concerning
     /// this user.
+    ///
+    /// # Returns
+    /// `true` if the user was removed, `false` if there was no such user.
     fn remove_user(&mut self, steam_id: SteamID) -> Result<bool, Self::Error>;
 
     /// Get a list of users registered as mixes players in the database.

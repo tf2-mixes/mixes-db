@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use json::JsonValue;
 
-use super::SpecificPerformance;
+use super::Performance;
 use crate::Class;
 
 pub struct MedicPerformance
@@ -41,9 +41,9 @@ impl MedicPerformance
     }
 }
 
-impl Into<SpecificPerformance> for MedicPerformance
+impl Into<Performance> for MedicPerformance
 {
-    fn into(self) -> SpecificPerformance { SpecificPerformance::Med(self) }
+    fn into(self) -> Performance { Performance::Med(self) }
 }
 
 #[cfg(test)]
