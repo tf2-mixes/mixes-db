@@ -143,7 +143,7 @@ impl SQLDb
                     },
                     Performance::Med(med_perf) => {
                         self.client.execute(
-                            "INSERT INTO med_stats (log_id, steam_id, healingdamage_taken, \
+                            "INSERT INTO med_stats (log_id, steam_id, healing, damage_taken, \
                              deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6)",
                             &[
                                 &log.meta().id,
