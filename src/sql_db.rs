@@ -2,12 +2,16 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
 
+use num_traits::FromPrimitive;
 use postgres as sql;
 
 use crate::class::Class;
 use crate::database::Database;
+use crate::dm_performance::DMPerformance;
 use crate::logs_tf::search_params::SearchParams;
 use crate::logs_tf::{self, Log, LogMetadata};
+use crate::medic_performance::MedicPerformance;
+use crate::overall_performance::OverallPerformance;
 use crate::steam_id::SteamID;
 use crate::Performance;
 
@@ -55,6 +59,7 @@ impl SQLDb
                 class smallint,
                 damage int,
                 kills smallint,
+                assists smallint,
                 deaths smallint,
                 time_played_secs int
             );
@@ -62,6 +67,9 @@ impl SQLDb
                 log_id OID,
                 steam_id bigint,
                 healing int,
+                average_uber_length_secs float,
+                num_ubers smallint,
+                num_drops smallint,
                 deaths smallint,
                 time_played_secs int
             );
@@ -126,13 +134,15 @@ impl SQLDb
                     Performance::DM(dm_perf) => {
                         self.client.execute(
                             "INSERT INTO dm_stats (log_id, steam_id, class, damage, kills, \
-                             deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                             assists, deaths, time_played_secs) VALUES ($1, $2, $3, $4, $5, $6, \
+                             $7, $8)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
                                 &(dm_perf.class as i16),
                                 &(dm_perf.damage as i32),
                                 &(dm_perf.kills as i16),
+                                &(dm_perf.assists as i16),
                                 &(dm_perf.deaths as i16),
                                 &(dm_perf.time_played_secs as i32),
                             ],
@@ -140,12 +150,16 @@ impl SQLDb
                     },
                     Performance::Med(med_perf) => {
                         self.client.execute(
-                            "INSERT INTO med_stats (log_id, steam_id, healing, deaths, \
-                             time_played_secs) VALUES ($1, $2, $3, $4, $5)",
+                            "INSERT INTO med_stats (log_id, steam_id, healing, \
+                             average_uber_length_secs, num_ubers, num_drops, deaths, \
+                             time_played_secs) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
                                 &(med_perf.healing as i32),
+                                &med_perf.average_uber_length_secs,
+                                &(med_perf.num_ubers as i16),
+                                &(med_perf.num_drops as i16),
                                 &(med_perf.deaths as i16),
                                 &(med_perf.time_played_secs as i32),
                             ],
@@ -305,8 +319,124 @@ impl Database for SQLDb
         user: SteamID,
         class: Class,
         limit: usize,
-    ) -> Result<Vec<Performance>, Self::Error>
+    ) -> Result<HashMap<u32, Vec<Performance>>, Self::Error>
     {
+        let steam_id: i64 = user.id64() as i64;
+        let class = class as i16;
+        let limit = limit as i64;
+
+        // Find the logs where the player has played this class for some amount of time.
+        // Ordered by log id descending to get the newest logs at the top.
+        let log_ids: Vec<u32> = self
+            .client
+            .query(
+                "SELECT log_id FROM dm_stats WHERE steam_id=$1 AND class=$2 ORDER BY log_id DESC \
+                 LIMIT $3",
+                &[&steam_id, &class, &limit],
+            )?
+            .into_iter()
+            .map(|row| row.get(0))
+            .collect();
+
+        // Get *all* performances of all classes of the player from that game.
+        let mut performances: HashMap<u32, Vec<Performance>> = HashMap::new();
+        for id in log_ids {
+            let mut log_performances = Vec::new();
+
+            // Overall performance
+            log_performances.extend::<Vec<Performance>>(
+                self.client
+                    .query(
+                        "SELECT (won_rounds, num_rounds, damage, damage_taken, kills, deaths) \
+                         FROM overall_stats WHERE log_id=$1",
+                        &[&id],
+                    )?
+                    .into_iter()
+                    .map(|row| {
+                        let won_rounds: i16 = row.get(0);
+                        let num_rounds: i16 = row.get(1);
+                        let damage: i32 = row.get(2);
+                        let damage_taken: i32 = row.get(3);
+                        let kills: i16 = row.get(4);
+                        let deaths: i16 = row.get(5);
+
+                        OverallPerformance {
+                            won_rounds:   won_rounds as u8,
+                            num_rounds:   num_rounds as u8,
+                            damage:       damage as u32,
+                            damage_taken: damage_taken as u32,
+                            kills:        kills as u8,
+                            deaths:       deaths as u8,
+                        }
+                        .into()
+                    })
+                    .collect(),
+            );
+
+            // DM performances
+            log_performances.extend::<Vec<Performance>>(
+                self.client
+                    .query(
+                        "SELECT (class, damage, kills, assists, deaths, time_played_secs) FROM \
+                         dm_stats WHERE log_id=$1",
+                        &[&id],
+                    )?
+                    .into_iter()
+                    .map(|row| {
+                        let class: i16 = row.get(0);
+                        let damage: i32 = row.get(1);
+                        let kills: i16 = row.get(2);
+                        let assists: i16 = row.get(3);
+                        let deaths: i16 = row.get(4);
+                        let time_played_secs: i32 = row.get(5);
+
+                        DMPerformance {
+                            class:            Class::from_i16(class)
+                                .expect("Invalid class in the database"),
+                            kills:            kills as u8,
+                            assists:          assists as u8,
+                            deaths:           deaths as u8,
+                            damage:           damage as u32,
+                            time_played_secs: time_played_secs as u32,
+                        }
+                        .into()
+                    })
+                    .collect(),
+            );
+
+            // Possible medic performance
+            log_performances.extend::<Vec<Performance>>(
+                self.client
+                    .query(
+                        "SELECT (healing, average_uber_length_secs, num_ubers, num_drops, deaths, \
+                         time_played_secs) FROM med_stats WHERE log_id=$1",
+                        &[&id],
+                    )?
+                    .into_iter()
+                    .map(|row| {
+                        let healing: i32 = row.get(0);
+                        let average_uber_length_secs: f32 = row.get(1);
+                        let num_ubers: i16 = row.get(2);
+                        let num_drops: i16 = row.get(3);
+                        let deaths: i16 = row.get(4);
+                        let time_played_secs: i32 = row.get(5);
+
+                        MedicPerformance {
+                            healing: healing as u32,
+                            average_uber_length_secs,
+                            num_ubers: num_ubers as u8,
+                            num_drops: num_drops as u8,
+                            deaths: deaths as u8,
+                            time_played_secs: time_played_secs as u32,
+                        }
+                        .into()
+                    })
+                    .collect(),
+            );
+
+            performances.insert(id, log_performances);
+        }
+
         todo!()
     }
 }

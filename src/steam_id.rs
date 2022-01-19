@@ -4,7 +4,7 @@
 
 use std::str::FromStr;
 
-use enum_primitive_derive::Primitive;
+use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
 const ACCOUNT_INSTANCE_OFFSET_BITS: u64 = 32;
@@ -178,7 +178,7 @@ impl FromStr for SteamID
     }
 }
 
-#[derive(Copy, Clone, Debug, Primitive)]
+#[derive(Copy, Clone, Debug, FromPrimitive)]
 pub enum Universe
 {
     Unspecified = 0,
@@ -189,7 +189,7 @@ pub enum Universe
     RC = 5,
 }
 
-#[derive(Copy, Clone, Debug, Primitive)]
+#[derive(Copy, Clone, Debug, FromPrimitive)]
 pub enum AccountType
 {
     Invalid = 0,

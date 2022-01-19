@@ -1,8 +1,10 @@
 use std::fmt;
 use std::str::FromStr;
 
+use num_derive::FromPrimitive;
+
 /// All TF2 classes.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, FromPrimitive)]
 pub enum Class
 {
     Demoman,

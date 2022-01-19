@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-enum-primitive-derive = "^0.2.2"
 json = "*"
+num-derive = "*"
 num-traits = "*"
 postgres = {version = "*", features = ["with-chrono-0_4"]}
 reqwest = {version = "*", features = ["blocking"]}

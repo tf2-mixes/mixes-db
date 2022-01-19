@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::RangeInclusive;
 
 use crate::{Class, Performance, SteamID};
@@ -67,5 +68,5 @@ pub trait Database: Sized
         user: SteamID,
         class: Class,
         limit: usize,
-    ) -> Result<Vec<Performance>, Self::Error>;
+    ) -> Result<HashMap<u32, Vec<Performance>>, Self::Error>;
 }
