@@ -14,6 +14,8 @@ pub struct OverallPerformance
     pub damage_taken: u32,
     pub kills:        u8,
     pub deaths:       u8,
+    pub num_medkits:  u16,
+    pub medkits_hp:   u32,
 }
 
 impl OverallPerformance
@@ -29,6 +31,8 @@ impl OverallPerformance
         let damage_taken = json["dt"].as_u32().unwrap_or(0);
         let kills = json["kills"].as_u8().unwrap_or(0);
         let deaths = json["deaths"].as_u8().unwrap_or(0);
+        let num_medkits = json["medkits"].as_u16().unwrap_or(0);
+        let medkits_hp = json["medkits_hp"].as_u32().unwrap_or(0);
 
         Self {
             won_rounds,
@@ -37,6 +41,8 @@ impl OverallPerformance
             damage_taken,
             kills,
             deaths,
+            num_medkits,
+            medkits_hp,
         }
     }
 }

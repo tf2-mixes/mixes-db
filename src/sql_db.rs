@@ -51,7 +51,9 @@ impl SQLDb
                 damage int,
                 damage_taken int,
                 kills smallint,
-                deaths smallint
+                deaths smallint,
+                num_medkits smallint,
+                medkits_hp int
             );
             CREATE TABLE IF NOT EXISTS dm_stats (
                 log_id OID,
@@ -117,8 +119,8 @@ impl SQLDb
                     Performance::Overall(perf) => {
                         self.client.execute(
                             "INSERT INTO overall_stats (log_id, steam_id, won_rounds, num_rounds, \
-                             damage, damage_taken, kills, deaths) VALUES ($1, $2, $3, $4, $5, $6, \
-                             $7, $8)",
+                             damage, damage_taken, kills, deaths, num_medkits, medkits_hp) VALUES \
+                             ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
                             &[
                                 &log.meta().id,
                                 &(steam_id.id64() as i64),
@@ -128,6 +130,8 @@ impl SQLDb
                                 &(perf.damage_taken as i32),
                                 &(perf.kills as i16),
                                 &(perf.deaths as i16),
+                                &(perf.num_medkits as i16),
+                                &(perf.medkits_hp as i32),
                             ],
                         )?;
                     },
@@ -347,8 +351,8 @@ impl Database for SQLDb
             log_performances.extend::<Vec<Performance>>(
                 self.client
                     .query(
-                        "SELECT (won_rounds, num_rounds, damage, damage_taken, kills, deaths) \
-                         FROM overall_stats WHERE log_id=$1",
+                        "SELECT (won_rounds, num_rounds, damage, damage_taken, kills, deaths, \
+                         num_medkits, medkits_hp) FROM overall_stats WHERE log_id=$1",
                         &[&id],
                     )?
                     .into_iter()
@@ -359,6 +363,8 @@ impl Database for SQLDb
                         let damage_taken: i32 = row.get(3);
                         let kills: i16 = row.get(4);
                         let deaths: i16 = row.get(5);
+                        let num_medkits: i16 = row.get(6);
+                        let medkits_hp: i32 = row.get(7);
 
                         OverallPerformance {
                             won_rounds:   won_rounds as u8,
@@ -367,6 +373,8 @@ impl Database for SQLDb
                             damage_taken: damage_taken as u32,
                             kills:        kills as u8,
                             deaths:       deaths as u8,
+                            num_medkits:  num_medkits as u16,
+                            medkits_hp:   medkits_hp as u32,
                         }
                         .into()
                     })
