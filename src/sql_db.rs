@@ -67,7 +67,7 @@ impl SQLDb
                 log_id OID,
                 steam_id bigint,
                 healing int,
-                average_uber_length_secs float,
+                average_uber_length_secs real,
                 num_ubers smallint,
                 num_drops smallint,
                 deaths smallint,
