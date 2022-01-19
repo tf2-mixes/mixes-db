@@ -4,7 +4,7 @@ use std::str::FromStr;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use json::JsonValue;
 
-use super::{QueryResult, LOGS_TF_API_BASE};
+use super::{log_delay, QueryResult, LOGS_TF_API_BASE};
 use crate::score::Score;
 use crate::{Performance, SteamID};
 
@@ -45,6 +45,7 @@ impl Log
     /// format that can be processed by a rating system easily.
     pub fn download(id: u32) -> QueryResult<Self>
     {
+        log_delay();
         let log = reqwest::blocking::get(format!("{}/{}", LOGS_TF_API_BASE, id))?
             .text()
             .expect("Unable to read response body");

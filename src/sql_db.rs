@@ -1,8 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
-use std::thread;
-use std::time::Duration;
 
 use postgres as sql;
 
@@ -296,12 +294,10 @@ impl Database for SQLDb
             let mut log = Log::download(meta.id);
             while log.is_err() {
                 println!("Failed to download log. Trying again");
-                thread::sleep(Duration::from_millis(500));
                 log = Log::download(meta.id);
             }
 
             self.add_log(log.unwrap())?;
-            thread::sleep(Duration::from_millis(500));
         }
 
         Ok(())
@@ -314,7 +310,10 @@ impl Database for SQLDb
         limit: usize,
     ) -> Result<Vec<Performance>, Self::Error>
     {
-        todo!()
+        let steam_id = user.id64() as i64;
+
+        // Get all the log ids where the player has played said class.
+        self.client.query("SELECT log_id FROM ", params)
     }
 }
 
