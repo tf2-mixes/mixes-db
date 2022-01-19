@@ -249,8 +249,9 @@ impl Database for SQLDb
         // participated.
         let mut new_logs: HashMap<u32, (LogMetadata, u8)> = HashMap::new();
         for user_id in user_ids {
-            let mut recent_logs = logs_tf::search_logs(SearchParams::player_id(user_id), 5)
-                .expect("Unable to read players logs");
+            let mut recent_logs =
+                logs_tf::search_logs(SearchParams::player_id(user_id).add_limit(10000), 5)
+                    .expect("Unable to read players logs");
 
             // Remove all logs that are already in the database
             remove_external_occurrences(&mut recent_logs, &known_logs);
