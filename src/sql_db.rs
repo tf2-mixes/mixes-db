@@ -310,10 +310,7 @@ impl Database for SQLDb
         limit: usize,
     ) -> Result<Vec<Performance>, Self::Error>
     {
-        let steam_id = user.id64() as i64;
-
-        // Get all the log ids where the player has played said class.
-        self.client.query("SELECT log_id FROM ", params)
+        todo!();
     }
 }
 
