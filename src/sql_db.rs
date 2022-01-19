@@ -249,7 +249,7 @@ impl Database for SQLDb
         // participated.
         let mut new_logs: HashMap<u32, (LogMetadata, u8)> = HashMap::new();
         for user_id in user_ids {
-            let mut recent_logs = logs_tf::search_logs(SearchParams::player_id(user_id))
+            let mut recent_logs = logs_tf::search_logs(SearchParams::player_id(user_id), 5)
                 .expect("Unable to read players logs");
 
             // Remove all logs that are already in the database
@@ -291,13 +291,9 @@ impl Database for SQLDb
 
         // Download the new logs and add it to the database
         for (meta, _) in new_logs.values() {
-            let mut log = Log::download(meta.id);
-            while log.is_err() {
-                println!("Failed to download log. Trying again");
-                log = Log::download(meta.id);
-            }
+            let log = Log::download(meta.id, 5).expect("Failed to download log.");
 
-            self.add_log(log.unwrap())?;
+            self.add_log(log)?;
         }
 
         Ok(())
@@ -310,7 +306,7 @@ impl Database for SQLDb
         limit: usize,
     ) -> Result<Vec<Performance>, Self::Error>
     {
-        todo!();
+        todo!()
     }
 }
 

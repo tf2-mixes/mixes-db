@@ -60,19 +60,19 @@ impl SearchParams
         self
     }
 
-    pub fn add_params_to_request(self, request_builder: RequestBuilder) -> RequestBuilder
+    pub fn add_params_to_request(&self, request_builder: RequestBuilder) -> RequestBuilder
     {
-        let request_builder = match self.player_id {
+        let request_builder = match &self.player_id {
             Some(id) => request_builder.query(&[("player", &id.to_id64_string())]),
             None => request_builder,
         };
 
-        let request_builder = match self.title {
+        let request_builder = match &self.title {
             Some(name) => request_builder.query(&[("title", &name)]),
             None => request_builder,
         };
 
-        let request_builder = match self.limit {
+        let request_builder = match &self.limit {
             Some(limit) => request_builder.query(&[("limit", &limit.to_string())]),
             None => request_builder,
         };

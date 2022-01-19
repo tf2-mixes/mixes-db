@@ -4,7 +4,7 @@ use std::str::FromStr;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use json::JsonValue;
 
-use super::{log_delay, QueryResult, LOGS_TF_API_BASE};
+use super::{keep_trying, log_delay, QueryResult, LOGS_TF_API_BASE};
 use crate::score::Score;
 use crate::{Performance, SteamID};
 
@@ -41,11 +41,8 @@ impl LogMetadata
 
 impl Log
 {
-    /// Download the log with the given id from logs.tf and turn it into a
-    /// format that can be processed by a rating system easily.
-    pub fn download(id: u32) -> QueryResult<Self>
+    fn download_once(id: u32) -> QueryResult<Self>
     {
-        log_delay();
         let log = reqwest::blocking::get(format!("{}/{}", LOGS_TF_API_BASE, id))?
             .text()
             .expect("Unable to read response body");
@@ -54,6 +51,13 @@ impl Log
         super::check_json_success(&json)?;
 
         Ok(Self::from_json(id, &json))
+    }
+
+    /// Download the log with the given id from logs.tf and turn it into a
+    /// format that can be processed by a rating system easily.
+    pub fn download(id: u32, num_retries: u8) -> QueryResult<Self>
+    {
+        keep_trying(|| Self::download_once(id), num_retries)
     }
 
     /// Parse the json information as found on logs.tf into a format easily
