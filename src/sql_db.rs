@@ -351,8 +351,8 @@ impl Database for SQLDb
             log_performances.extend::<Vec<Performance>>(
                 self.client
                     .query(
-                        "SELECT (won_rounds, num_rounds, damage, damage_taken, kills, deaths, \
-                         num_medkits, medkits_hp) FROM overall_stats WHERE log_id=$1",
+                        "SELECT won_rounds, num_rounds, damage, damage_taken, kills, deaths, \
+                         num_medkits, medkits_hp FROM overall_stats WHERE log_id=$1",
                         &[&id],
                     )?
                     .into_iter()
@@ -385,7 +385,7 @@ impl Database for SQLDb
             log_performances.extend::<Vec<Performance>>(
                 self.client
                     .query(
-                        "SELECT (class, damage, kills, assists, deaths, time_played_secs) FROM \
+                        "SELECT class, damage, kills, assists, deaths, time_played_secs FROM \
                          dm_stats WHERE log_id=$1",
                         &[&id],
                     )?
@@ -416,8 +416,8 @@ impl Database for SQLDb
             log_performances.extend::<Vec<Performance>>(
                 self.client
                     .query(
-                        "SELECT (healing, average_uber_length_secs, num_ubers, num_drops, deaths, \
-                         time_played_secs) FROM med_stats WHERE log_id=$1",
+                        "SELECT healing, average_uber_length_secs, num_ubers, num_drops, deaths, \
+                         time_played_secs FROM med_stats WHERE log_id=$1",
                         &[&id],
                     )?
                     .into_iter()
