@@ -445,7 +445,7 @@ impl Database for SQLDb
             performances.insert(id, log_performances);
         }
 
-        todo!()
+        Ok(performances)
     }
 }
 
