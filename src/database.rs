@@ -34,6 +34,13 @@ pub trait Database: Sized
     /// A vector containing all `SteamID`s registered as mixes players.
     fn users(&mut self) -> Result<Vec<SteamID>, Self::Error>;
 
+    /// Get the corresponding username of the player with the given steam id.
+    ///
+    /// # Returns
+    /// The name of the player, which should be the same as the player's name on
+    /// ETF2L. If the player name is not in the database, `None` is returned.
+    fn username(&mut self, steam_id: SteamID) -> Result<Option<String>, Self::Error>;
+
     /// Retrieve the latest logs of the mixes players from logs.tf. Ignores
     /// games that do not contain enough mixes players. The amount of mixes
     /// players needed in one game is governed by the `min_ratio` variable,

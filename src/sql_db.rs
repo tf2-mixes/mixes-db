@@ -33,6 +33,7 @@ impl SQLDb
             "CREATE TABLE IF NOT EXISTS users (
                 steam_id bigint,
                 discord_id bigint NOT NULL UNIQUE,
+                username varchar(50),
                 PRIMARY KEY (steam_id)
             );
             CREATE TABLE IF NOT EXISTS logs (
@@ -254,6 +255,20 @@ impl Database for SQLDb
             .collect())
     }
 
+    fn username(&mut self, steam_id: SteamID) -> Result<Option<String>, Self::Error>
+    {
+        let steam_id = steam_id.id64() as i64;
+
+        Ok(self
+            .client
+            .query("SELECT username FROM users WHERE steam_id=$1", &[&steam_id])?
+            .iter()
+            .find_map(|row| {
+                let username: String = row.get(0);
+                Some(username)
+            }))
+    }
+
     fn update(&mut self, min_ratio: f32, num_players: RangeInclusive<u8>)
         -> Result<(), Self::Error>
     {
@@ -267,6 +282,7 @@ impl Database for SQLDb
         // participated.
         let mut new_logs: HashMap<u32, (LogMetadata, u8)> = HashMap::new();
         for user_id in user_ids {
+            println!("Checking {}'s logs...", user_id.id64());
             let mut recent_logs =
                 logs_tf::search_logs(SearchParams::player_id(user_id).add_limit(10000), 5)
                     .expect("Unable to read players logs");
