@@ -146,18 +146,9 @@ impl FromStr for SteamID
         else if s.starts_with('[') && s.ends_with(']') {
             let parts: Vec<&str> = s.split(':').collect();
             if parts.len() == 3 && parts[0].len() == 2 && parts[1].len() == 1 {
-                let account_id = {
-                    let lowest_bit = parts[1].parse::<u32>().map_err(|_| ())?;
-                    if lowest_bit > 1 {
-                        return Err(());
-                    }
-
-                    let id31upper_bits = parts[2][..parts[2].len() - 1]
-                        .parse::<u32>()
-                        .map_err(|_| ())?;
-                    id31upper_bits | lowest_bit // Whaddahell, why is this so
-                                                // trippy??
-                };
+                let account_id = parts[2][..parts[2].len() - 1]
+                    .parse::<u32>()
+                    .map_err(|_| ())?;
                 let account_type: AccountType = parts[0].chars().nth(1).unwrap().try_into()?;
                 let universe: Universe = Universe::Public;
 
@@ -261,6 +252,13 @@ mod test
                 .expect("Unable to parse")
                 .id64(),
             76561198031286581
+        );
+
+        assert_eq!(
+            SteamID::from_str("[U:1:287181528]")
+                .expect("Unable to parse")
+                .id64(),
+            76561198247447256
         );
     }
 }
